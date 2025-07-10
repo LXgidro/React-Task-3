@@ -39,76 +39,90 @@
 }
 
 .calculator {
-  width: 100%;
-  max-width: 220px;
-  margin: 2rem auto;
-  border: 1px solid #ffffff;
-  border-radius: 8px;
-  padding: 1.2rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  background: #ffffffee;
+  width: 300px;
+  background: #f5f5f5;
+  border-radius: 10px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
-.calculator-display {
-  width: 220px;
-  height: 40px;
-  margin-bottom: 10px;
-  font-size: 20px;
+.display {
+  height: 60px;
+  padding: 0.5rem 1rem;
+  margin-bottom: 1rem;
+  background: #242424;
+  border-radius: 5px;
+  font-size: 2rem;
   text-align: right;
-  padding: 5px;
-  box-sizing: border-box;
-  background-color: #242424;
-  color: #ffffff;
-  transition: color 0.3s ease;
+  overflow: hidden;
 }
 
-.calculator-display.result {
-  color: #00d8ff;
-  font-weight: bold;
-}
-
-.calculator-buttons {
+.buttons {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  grid-gap: 5px;
+  gap: 0.5rem;
 }
 
-.calculator-btn {
-  height: 40px;
-  font-size: 16px;
+.btn {
+  background: #242424;
+  height: 50px;
   border: none;
-  border-radius: 3px;
-  background: #bd34fe;
+  border-radius: 5px;
+  font-weight: 700;
+  font-size: 1.2rem;
   cursor: pointer;
+  transition: all 0.2s;
 }
-
-.calculator-operations {
-  background: #ffae06;
-  color: black;
-}
-
-.calculator-btn:hover {
+.btn:hover {
+  opacity: 0.9;
   background: #926bfe;
 }
 
-.calculator-operations:hover {
-  background: #ffdd36;
+.operator {
+  color: #242424;
+  font-weight: 700;
+  background: #ffae06;
+}
+.operator:hover {
+  background: #ffd72f;
 }
 
-.calculator-equals {
+.equals {
+  font-weight: 700;
   background: #ffae06;
   color: rgb(0, 0, 0);
 }
 
-.calculator-equals:hover {
+.equals:hover {
   background: #00d8ff;
 }
 
-.calculator-clear {
-  background: #f44336;
+.clear {
+  background: #eb483c;
   color: white;
+  font-weight: bold;
 }
 
-.calculator-clear:hover {
-  background: #ff2525;
+.clear:hover {
+  background: #f81313;
+}
+
+.operation-display {
+  height: 20px;
+  padding: 0.5rem 1rem;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  color: #666;
+  text-align: right;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.display.active-operation {
+  color: #4caf50;
+  font-weight: bold;
+}
+.display.result {
+  color: #00d8ff;
+  font-weight: bold;
 }

@@ -3,146 +3,219 @@ import reactLogo from './assets/react.svg';
 import viteLogo from '/vite.svg';
 import './App.css';
 
-const calculate = (expression) => {
+const compute = (a, b, operator) => {
   try {
-    const cleanExpr = expression
-      .replace(/×/g, '*')
-      .replace(/[^\d+\-*/.()]/g, '');
+    let result;
+    switch (operator) {
+      case '+':
+        result = a + b;
+        break;
+      case '-':
+        result = a - b;
+        break;
+      case '*':
+        result = a * b;
+        break;
+      case '/':
+        result = a / b;
+        break;
+      default:
+        throw new Error('Invalid operator');
+    }
 
-    if (!cleanExpr) return { value: 'Error', isResult: true };
-
-    const result = new Function(`return ${cleanExpr}`)();
-
-    const formattedResult = Number.isInteger(result)
+    return Number.isInteger(result)
       ? result.toString()
       : parseFloat(result.toFixed(8)).toString();
-
-    return {
-      value: formattedResult,
-      isResult: true,
-      rawValue: result,
-    };
   } catch {
-    return { value: 'Error', isResult: true };
+    return 'Error';
   }
 };
 
 function App() {
-  const [input, setInput] = useState({ value: '', isResult: false });
+  const [display, setDisplay] = useState('0');
+  const [operation, setOperation] = useState('');
+  const [firstOperand, setFirstOperand] = useState(null);
+  const [currentOperator, setCurrentOperator] = useState(null);
+  const [showResult, setShowResult] = useState(false);
   const displayRef = useRef(null);
 
-  useEffect(() => {
-    displayRef.current?.focus();
-  }, []);
+  useEffect(() => displayRef.current?.focus(), []);
 
-  const handleButtonClick = (value) => {
-    if (value === 'C') {
-      setInput({ value: '', isResult: false });
-    } else if (value === '=') {
-      const result = calculate(input.value);
-      setInput(result);
-    } else if (['+', '-', '*', '/'].includes(value)) {
-      setInput((prev) => ({
-        value: prev.isResult
-          ? `${prev.value}${value}`
-          : `${prev.value}${value}`,
-        isResult: false,
-      }));
+  const inputDigit = (digit) => {
+    if (showResult) {
+      setDisplay(digit);
+      setOperation('');
+      setShowResult(false);
+    } else if (
+      currentOperator &&
+      firstOperand !== null &&
+      display === firstOperand.toString()
+    ) {
+      setDisplay(digit);
+      setOperation(`${firstOperand} ${currentOperator} ${digit}`);
     } else {
-      setInput((prev) => ({
-        value: prev.isResult ? value : prev.value + value,
-        isResult: false,
-      }));
+      setDisplay(display === '0' ? digit : display + digit);
+      if (currentOperator) {
+        setOperation(
+          `${firstOperand} ${currentOperator} ${
+            display === '0' ? digit : display + digit
+          }`
+        );
+      }
     }
   };
 
+  const inputDecimal = () => {
+    if (showResult) {
+      setDisplay('0.');
+      setOperation('');
+      setShowResult(false);
+    } else if (!display.includes('.')) {
+      setDisplay(display + '.');
+      if (currentOperator) {
+        setOperation(`${firstOperand} ${currentOperator} ${display}.`);
+      }
+    }
+  };
+
+  const clearDisplay = () => {
+    setDisplay('0');
+    setOperation('');
+    setFirstOperand(null);
+    setCurrentOperator(null);
+    setShowResult(false);
+  };
+
+  const handleOperator = (nextOperator) => {
+    const inputValue = parseFloat(display);
+
+    if (firstOperand === null) {
+      setFirstOperand(inputValue);
+      setOperation(`${inputValue} ${nextOperator}`);
+      setDisplay(inputValue.toString());
+    } else if (currentOperator) {
+      const result = compute(firstOperand, inputValue, currentOperator);
+      setDisplay(result);
+      setFirstOperand(parseFloat(result));
+      setOperation(`${result} ${nextOperator}`);
+    } else {
+      setOperation(`${display} ${nextOperator}`);
+    }
+
+    setCurrentOperator(nextOperator);
+    setShowResult(false);
+  };
+
+  const calculate = () => {
+    if (firstOperand === null || currentOperator === null) return;
+
+    const inputValue = parseFloat(display);
+    const result = compute(firstOperand, inputValue, currentOperator);
+    setDisplay(result);
+    setOperation(`${firstOperand} ${currentOperator} ${inputValue} =`);
+    setFirstOperand(parseFloat(result));
+    setCurrentOperator(null);
+    setShowResult(true);
+  };
+
   const handleKeyDown = (e) => {
-    if (e.key >= '0' && e.key <= '9') {
-      setInput((prev) => ({
-        value: prev.isResult ? e.key : prev.value + e.key,
-        isResult: false,
-      }));
-    } else if (['+', '-', '*', '/', '.'].includes(e.key)) {
-      setInput((prev) => ({
-        value: prev.isResult
-          ? `${prev.value}${e.key}`
-          : `${prev.value}${e.key}`,
-        isResult: false,
-      }));
-    } else if (e.key === 'Enter') {
+    const { key } = e;
+
+    if (key >= '0' && key <= '9') {
       e.preventDefault();
-      const result = calculate(input.value);
-      setInput(result);
-    } else if (e.key === 'Backspace') {
-      setInput((prev) => ({
-        value: prev.value.slice(0, -1),
-        isResult: false,
-      }));
-    } else if (e.key === 'Escape') {
-      setInput({ value: '', isResult: false });
+      inputDigit(key);
+    } else if (key === '.') {
+      e.preventDefault();
+      inputDecimal();
+    } else if (key === 'Enter') {
+      e.preventDefault();
+      calculate();
+    } else if (key === 'Escape') {
+      e.preventDefault();
+      clearDisplay();
+    } else if (key === 'Backspace') {
+      e.preventDefault();
+      setDisplay(display.length === 1 ? '0' : display.slice(0, -1));
+    } else if (['+', '-', '*', '/'].includes(key)) {
+      e.preventDefault();
+      handleOperator(key);
     }
   };
 
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [input.value]);
+  }, [display, firstOperand, currentOperator, showResult]);
 
   const buttons = [
-    { value: '7', text: '7' },
-    { value: '8', text: '8' },
-    { value: '9', text: '9' },
-    { value: '/', text: '/', cls: 'calculator-operations' },
-    { value: '4', text: '4' },
-    { value: '5', text: '5' },
-    { value: '6', text: '6' },
-    { value: '*', text: '×', cls: 'calculator-operations' },
-    { value: '1', text: '1' },
-    { value: '2', text: '2' },
-    { value: '3', text: '3' },
-    { value: '-', text: '-', cls: 'calculator-operations' },
-    { value: '0', text: '0' },
-    { value: '.', text: '.' },
-    { value: 'C', text: 'C', cls: 'calculator-clear' },
-    { value: '+', text: '+', cls: 'calculator-operations' },
-    { value: '=', text: '=', cls: 'calculator-equals', colspan: 4 },
+    '7',
+    '8',
+    '9',
+    { value: '/', text: '/', cls: 'operator' },
+    '4',
+    '5',
+    '6',
+    { value: '*', text: '×', cls: 'operator' },
+    '1',
+    '2',
+    '3',
+    { value: '-', text: '-', cls: 'operator' },
+    '0',
+    '.',
+    { value: 'C', text: 'C', cls: 'clear' },
+    { value: '+', text: '+', cls: 'operator' },
+    { value: '=', text: '=', cls: 'equals', colspan: 4 },
   ];
 
   return (
-    <>
-      <div className="logodiv">
+    <div className="app">
+      <div className="logos">
         <a href="https://vite.dev" target="_blank" rel="noopener noreferrer">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
+          <img src={viteLogo} alt="Vite" className="logo" />
         </a>
         <a href="https://react.dev" target="_blank" rel="noopener noreferrer">
-          <img src={reactLogo} className="logo react" alt="React logo" />
+          <img src={reactLogo} alt="React" className="logo react" />
         </a>
       </div>
 
       <div className="calculator">
+        <div className="operation-display">{operation || '\u00A0'}</div>
         <div
           ref={displayRef}
-          className={`calculator-display ${input.isResult ? 'result' : ''}`}
+          className={`display ${showResult ? 'result' : ''}`}
           tabIndex={0}
-          onKeyDown={handleKeyDown}
         >
-          {input.value || <span className="placeholder">0</span>}
+          {display}
         </div>
 
-        <div className="calculator-buttons">
-          {buttons.map((btn) => (
-            <button
-              key={btn.value || btn.text}
-              className={`calculator-btn ${btn.cls || ''}`}
-              onClick={() => handleButtonClick(btn.value)}
-              style={btn.colspan ? { gridColumn: `span ${btn.colspan}` } : {}}
-            >
-              {btn.text}
-            </button>
-          ))}
+        <div className="buttons">
+          {buttons.map((btn) => {
+            const config =
+              typeof btn === 'string' ? { value: btn, text: btn } : btn;
+
+            return (
+              <button
+                key={config.value}
+                className={`btn ${config.cls || ''}`}
+                onClick={() => {
+                  if (config.value === 'C') clearDisplay();
+                  else if (config.value === '=') calculate();
+                  else if (config.value === '.') inputDecimal();
+                  else if (['+', '-', '*', '/'].includes(config.value))
+                    handleOperator(config.value);
+                  else inputDigit(config.value);
+                }}
+                style={
+                  config.colspan ? { gridColumn: `span ${config.colspan}` } : {}
+                }
+              >
+                {config.text}
+              </button>
+            );
+          })}
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
